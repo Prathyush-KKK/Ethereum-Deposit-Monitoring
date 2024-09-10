@@ -41,7 +41,7 @@
 
       ```bash
       git clone https://github.com/Prathyush-KKK/luganodes-ethmon.git
-      cd eth-deposit-tracker
+      cd luganodes-ethmon
       ```
 
   2. **Install Dependencies**:
@@ -122,4 +122,4 @@
   2. To obtain your Chat ID, use the following method:
   3. Visit this URL in your browser, replacing <YourBotToken> with the token you received from BotFather.
   4. Look for the chat object in the JSON response to find your Chat ID.
-   ![image](https://github.com/user-attachments/assets/ccf182e8-36e4-4944-8d00-ef654ed3dc08)o
+   ![image](https://github.com/user-attachments/assets/ccf182e8-36e4-4944-8d00-ef654ed3dc08)
