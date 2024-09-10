@@ -90,7 +90,7 @@
   ```bash
   docker-compose up --build
   ```
-    **Accessing Services**
+    **Accessing Services** (right now scrapper dockerfile isnt working)
 ``bash
   npm run dev
   ```

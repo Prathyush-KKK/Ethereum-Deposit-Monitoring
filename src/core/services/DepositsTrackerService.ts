@@ -7,12 +7,14 @@ import {
 import { IDepositsRepository } from "core/types.repositories";
 import { DepositsTrackerService as IDepositsTrackerService } from "core/types.services";
 
+
+// NOTE - error handling for fetches to data gateways is missing and it's relative to business logics needs
+
 export class DepositsTrackerService implements IDepositsTrackerService {
   private blockchainGateway: IBlockchainGateway;
   private notificatorGateway: INotifierGateway | undefined;
   private depositsRepository: IDepositsRepository;
   private filterIn: string[];
-  private lastProcessedBlock: number;
 
   constructor(options: {
     blockchainGateway: IBlockchainGateway;
@@ -24,17 +26,19 @@ export class DepositsTrackerService implements IDepositsTrackerService {
     this.notificatorGateway = options.notificatorGateway;
     this.depositsRepository = options.depositsRepository;
     this.filterIn = options.filterIn;
-    this.lastProcessedBlock = 0;
 
-    if (this.filterIn.length) {
+    if (this.filterIn.length)
       console.info(
         `Filtering deposits for addresses: ${this.filterIn.join(", ")}`
       );
-    }
 
-    this.notificatorGateway?.sendNotification(`Deposits tracker service started`);
+    // Send a notification
+    this.notificatorGateway?.sendNotification(
+      `Deposits tracker service started`
+    );
   }
 
+  // Process the last block's transactions in batches
   public async processBlockTransactions(
     blockNumberOrHash: string | number = "latest"
   ): Promise<void> {
@@ -43,61 +47,60 @@ export class DepositsTrackerService implements IDepositsTrackerService {
         blockNumberOrHash
       );
 
-      const storeBatchSize = 5;
+      const sotreBatchSize = 5;
       if (transactions && transactions.length > 0) {
-        const batches = Math.ceil(transactions.length / storeBatchSize);
+        const batches = Math.ceil(transactions.length / sotreBatchSize);
         for (let i = 0; i < batches; i++) {
           const batch = transactions.slice(
-            i * storeBatchSize,
-            (i + 1) * storeBatchSize
+            i * sotreBatchSize,
+            (i + 1) * sotreBatchSize
           );
           for (const tx of batch) {
             await this.processTransaction(tx);
           }
         }
-
-        if (typeof blockNumberOrHash === "number") {
-          await this.updateLastProcessedBlock(blockNumberOrHash);
-        }
       }
-    } catch (error) {
-      console.error(`Error processing block ${blockNumberOrHash}:`, error);
-      await this.notificatorGateway?.sendNotification(
-        `Error processing block: ${blockNumberOrHash}`
-      );
+    } catch (error: any) {
+      //
     }
   }
 
   public async processBlockTransactionsFrom(blockNumber: number) {
-    const lastStoredBlockNumber = await this.getLastProcessedBlock() || blockNumber;
-    if (lastStoredBlockNumber) {
+    const lastStoredBlockNumber =
+      (await this.depositsRepository.getLatestStoredBlock()) || blockNumber;
+    if (lastStoredBlockNumber)
       console.info(
-        `Executing block txs processing from block number ${lastStoredBlockNumber}`
+        `Executing block txs processing from block number ${lastStoredBlockNumber} as it's <last stored/requested> block number:`
       );
-    }
 
-    const latestBlock = await this.blockchainGateway.getBlockNumber();
+    let latestBlock = await this.blockchainGateway.getBlockNumber();
     console.info(`Latest block number: ${latestBlock}`);
 
+    const promises = [];
     for (let i = lastStoredBlockNumber; i <= latestBlock; i++) {
-      await this.processBlockTransactions(i);
-      await this.updateLastProcessedBlock(i);
+      promises.push(this.processBlockTransactions(i));
     }
+    await Promise.all(promises);
 
     console.info(
       `Finished processing blocks from ${lastStoredBlockNumber} to ${latestBlock}`
     );
   }
 
+  // Listen to pending transactions in real-time
   public startPendingTransactionsListener(): void {
     this.blockchainGateway.watchPendingTransactions((tx: TransactionData) => {
+      // Check if tx corresponds to the public key
       this.processTransaction(tx);
     });
   }
 
+  // Listen to new minted blocks in real-time
   public startMintedBlocksListener(): void {
     this.blockchainGateway.watchMintedBlocks((blockNumber: number) => {
       this.processBlockTransactions(blockNumber);
+      // Check if tx corresponds to the public key
+      // this.processTransactions(tx);
     });
   }
 
@@ -107,6 +110,8 @@ export class DepositsTrackerService implements IDepositsTrackerService {
 
       console.info("Found deposit transaction:", txData.hash);
 
+      // Calculate the transaction fee as the product of gas limit and gas price
+      // TODO - Check this is acurate
       const fee = txData.gasLimit * txData.gasPrice;
 
       const deposit: Deposit = {
@@ -122,38 +127,17 @@ export class DepositsTrackerService implements IDepositsTrackerService {
 
       DepositSchema.parse(deposit);
 
+      // Save the deposit to the storage repository
       await this.depositsRepository.storeDeposit(deposit);
 
+      // Send a notification
       await this.notificatorGateway?.sendNotification(
         `Deposit processed: ${txData.hash}\n\nAmount: ${txData.value}\nFee: ${fee}\nFrom: ${txData.from}\nTo: ${txData.to}\nBlock: ${txData.blockNumber}`
       );
     } catch (error) {
-      console.error(`Error processing deposit ${txData.hash}:`, error);
       await this.notificatorGateway?.sendNotification(
         `Error processing deposit: ${txData.hash}`
       );
     }
-  }
-
-  private async updateLastProcessedBlock(blockNumber: number): Promise<void> {
-    this.lastProcessedBlock = blockNumber;
-    try {
-      await this.depositsRepository.updateLastProcessedBlock(blockNumber);
-    } catch (error) {
-      console.warn('Failed to update last processed block in repository:', error);
-    }
-    console.info(`Updated last processed block to ${blockNumber}`);
-  }
-
-  private async getLastProcessedBlock(): Promise<number> {
-    try {
-      const blockFromRepo = await this.depositsRepository.getLatestStoredBlock();
-      if (blockFromRepo && blockFromRepo > this.lastProcessedBlock) {
-        this.lastProcessedBlock = blockFromRepo;
-      }
-    } catch (error) {
-      console.warn('Failed to get last processed block from repository:', error);
-    }
-    return this.lastProcessedBlock;
   }
 }
