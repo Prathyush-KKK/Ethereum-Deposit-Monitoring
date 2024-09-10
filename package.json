@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only --watch --ignore-watch node_modules src/apps/ethBeaconDepositsTracker/index.ts",
-    "dev-api": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only --watch --ignore-watch node_modules src/apps/prometheusMetricsRestApi/index.ts"
+    "dev-api": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only --watch --ignore-watch node_modules src/apps/prometheusMetricsRestApi/index.ts",
+    "start:prometheus": "node dist/apps/prometheusMetricsRestApi/index.js",
+    "start:ethBeacon": "node dist/ethBeaconDepositsTracker/index.js"
   },
   "keywords": [],
   "author": "Prathyush-KKK and paluchi",

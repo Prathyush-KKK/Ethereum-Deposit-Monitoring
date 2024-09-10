@@ -19,5 +19,5 @@ RUN npm run build
 # Expose the port the application will run on
 EXPOSE 4000
 
-# Start the application
-CMD ["node", "dist/apps/ethBeaconDepositsTracker/index.js"]
+# Check if dist/index.js exists and run the appropriate entry point
+CMD [ "sh", "-c", "if [ -f dist/apps/prometheusMetricsRestApi/index.js ]; then node dist/apps/prometheusMetricsRestApi/index.js; elif [ -f dist/ethBeaconDepositsTracker/index.js ]; then node dist/ethBeaconDepositsTracker/index.js; else echo 'No entry point found!'; exit 1; fi" ]
