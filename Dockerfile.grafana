@@ -1,0 +1,27 @@
+# Dockerfile for Grafana
+FROM grafana/grafana:latest
+
+# Expose Grafana's default port
+EXPOSE 3000
+
+# Switch to root to make changes
+USER root
+
+# Copy provisioning files
+COPY grafana/provisioning /etc/grafana/provisioning
+
+# Copy dashboards
+COPY grafana/provisioning/dashboards /var/lib/grafana/dashboards
+
+# Copy the setup script to a location where the grafana user can access it
+COPY grafana/notifications/setup-telegram.sh /scripts/setup-telegram.sh
+
+# Make the setup script executable
+RUN chmod +x /scripts/setup-telegram.sh
+
+# Switch back to the grafana user
+USER grafana
+
+# Use ENTRYPOINT to run Grafana and then the setup script
+ENTRYPOINT ["/run.sh"]
+CMD ["/bin/sh", "-c", "/scripts/setup-telegram.sh"]
