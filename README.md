@@ -2,7 +2,7 @@
 
   ## Project Overview
 
-  The Ethereum Deposit Monitor is designed to monitor and record ETH deposits made to the Beacon Deposit Contract at address `0x00000000219ab540356cBB839Cbe05303d7705Fa`. This tracker fetches real-time deposit data, handles multiple deposits in single transactions, logs relevant deposit details, and provides optional alerting and dashboard features for better visibility.
+  The Ethereum Deposit Monitor is designed to monitor and record ETH deposits made to the Beacon Deposit Contract at address `0x00000000219ab540356cBB839Cbe05303d7705Fa`. (Ethereum 2.0 Beacon Chain) This tracker fetches real-time deposit data, handles multiple deposits in single transactions, logs relevant deposit details, and provides optional alerting and dashboard features for better visibility.
 
   ## Features
 
@@ -90,8 +90,10 @@
   ```bash
   docker-compose up --build
   ```
-
-    ## Accessing Services
+    **Accessing Services**
+``bash
+  npm run dev
+  ```
 
   Once the containers are running, you can access the following services:
 
