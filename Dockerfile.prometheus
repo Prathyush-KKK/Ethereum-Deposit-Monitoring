@@ -1,0 +1,9 @@
+FROM prom/prometheus:latest
+
+# Add your custom Prometheus configuration file
+COPY grafana/prometheus.yml /etc/prometheus/
+
+# Expose Prometheus' default port
+EXPOSE 9090
+
+ENTRYPOINT ["/bin/prometheus", "--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus"]
