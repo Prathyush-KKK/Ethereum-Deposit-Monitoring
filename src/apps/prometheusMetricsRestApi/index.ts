@@ -30,7 +30,6 @@ const latestBlockTimestamp = new Gauge({
   registers: [register],
 });
 
-
 // Middleware to parse JSON
 app.use(express.json());
 
@@ -38,8 +37,8 @@ app.use(express.json());
 app.get("/prometheus", async (req: Request, res: Response) => {
   const { blockchain, network, token } = req.query;
 
-  // Current timestamp - 5 minutes, converted to seconds
-  const fiveMinutesAgo = Math.floor((Date.now() - 5 * 60 * 1000) / 1000);
+  // Current timestamp - 15 minutes (to be more flexible), converted to seconds
+  const fifteenMinutesAgo = Math.floor((Date.now() - 15 * 60 * 1000) / 1000);
 
   // Check if all required parameters are present
   if (!blockchain || !network || !token) {
@@ -54,26 +53,32 @@ app.get("/prometheus", async (req: Request, res: Response) => {
       blockchain: blockchain as string,
       network: network as string,
       token: token as string,
-      blockTimestamp: fiveMinutesAgo,
+      blockTimestamp: fifteenMinutesAgo, // Fetch deposits from the last 15 minutes
     });
 
+    // Log the fetched deposits for debugging
+    console.log(`Deposits fetched: ${deposits.length}`);
+    
+    if (deposits.length === 0) {
+      console.log("No deposits found in the last 15 minutes");
+    }
+
+    // Update Prometheus metrics
     deposits.forEach((deposit) => {
       console.log(`Deposit: ${JSON.stringify(deposit)}`);
       const blockNumber = Number(deposit.blockNumber);
       const blockTimestamp = Number(deposit.blockTimestamp);
-      console.log(deposit)
+
       depositsTotal
         .labels(deposit.blockchain, deposit.network, deposit.token)
-        .inc();
+        .inc(); // Increment the counter
       latestBlockNumber
         .labels(deposit.blockchain, deposit.network)
-        .set(blockNumber);
+        .set(blockNumber); // Set the latest block number
       latestBlockTimestamp
         .labels(deposit.blockchain, deposit.network)
-        .set(blockTimestamp);
+        .set(blockTimestamp); // Set the latest block timestamp
     });
-    
-    
 
     // Return the metrics in Prometheus format
     res.set("Content-Type", register.contentType);

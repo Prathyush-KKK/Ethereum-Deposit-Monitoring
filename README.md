@@ -90,15 +90,32 @@
   ```bash
   docker-compose up --build
   ```
-    **Accessing Services** (right now scrapper dockerfile isnt working)
+    **Accessing Services** (right now scrapper dockerfile is not working)
 ``bash
   npm run dev
   ```
 
+  `bash
+  npm run dev-api
+  ```
+
   Once the containers are running, you can access the following services:
 
-  - **Prometheus**: Open your web browser and navigate to [http://localhost:9090](http://localhost:9090) to access Prometheus, where you can query and visualize metrics.
+  - **Prometheus**: Open your web browser and navigate to [http://localhost:9090](http://localhost:9090) to access Prometheus, where you can query and visualize metrics. 
+  - hit endpoint at :3005 to see commands
+```
+# HELP crypto_deposits_total Total number of crypto deposits
+# TYPE crypto_deposits_total counter
+
+# HELP crypto_deposits_latest_block Latest block number processed
+# TYPE crypto_deposits_latest_block gauge
+
+# HELP crypto_deposits_latest_timestamp Timestamp of the latest processed block
+# TYPE crypto_deposits_latest_timestamp gauge
+```
   - **Grafana**: Open your web browser and navigate to [http://localhost:3000](http://localhost:3000) to access Grafana. You can set up dashboards to visualize deposit data and system metrics.
+  - Load the given deposit-dashboard.json to display your visualization 
+  - Add prometheus as data source 
 
   ## Stopping the Containers
 
