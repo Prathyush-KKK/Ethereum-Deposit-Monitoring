@@ -1,83 +1,131 @@
 {
   "dashboard": {
     "id": null,
-    "title": "ETH Deposit Tracker",
-    "uid": "eth-deposit-tracker",
-    "tags": ["dashboard"],
+    "uid": "crypto-deposits",
+    "title": "Crypto Deposits Dashboard",
+    "tags": [ "generated", "crypto" ],
     "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "5s",
     "panels": [
       {
-        "type": "timeseries",
-        "title": "Total Deposit Amount Over Time",
+        "type": "graph",
+        "title": "Total Deposits",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
         "targets": [
           {
-            "expr": "sum(rate(deposit_amount[5m])) by (pubkey)",
-            "legendFormat": "Total Deposits",
+            "expr": "sum(crypto_deposits_total) by (blockchain, network, token)",
+            "legendFormat": "{{blockchain}} - {{network}} - {{token}}",
             "refId": "A"
           }
         ],
-        "gridPos": {
-          "x": 0,
-          "y": 0,
-          "w": 12,
-          "h": 9
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": "0",
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "xaxis": {
+          "mode": "time",
+          "show": true
         }
       },
       {
-        "type": "bargauge",
-        "title": "Number of Deposits Over Time",
+        "type": "gauge",
+        "title": "Latest Block Number",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
         "targets": [
           {
-            "expr": "count(rate(deposit_amount[5m])) by (pubkey)",
-            "legendFormat": "Deposit Count",
-            "refId": "B"
+            "expr": "crypto_deposits_latest_block",
+            "legendFormat": "{{blockchain}} - {{network}}",
+            "refId": "A"
           }
         ],
-        "gridPos": {
-          "x": 12,
-          "y": 0,
-          "w": 12,
-          "h": 9
+        "options": {
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
         }
       },
       {
         "type": "stat",
-        "title": "Average Deposit Amount",
-        "targets": [
-          {
-            "expr": "avg(deposit_amount)",
-            "legendFormat": "Avg Deposit",
-            "refId": "C"
-          }
-        ],
+        "title": "Latest Block Timestamp",
         "gridPos": {
-          "x": 0,
-          "y": 9,
-          "w": 12,
-          "h": 9
-        }
-      },
-      {
-        "type": "table",
-        "title": "Individual Deposit Details",
-        "targets": [
-          {
-            "expr": "deposit_amount",
-            "legendFormat": "{{blockNumber}}",
-            "refId": "D"
-          }
-        ],
-        "gridPos": {
-          "x": 0,
-          "y": 18,
+          "h": 8,
           "w": 24,
-          "h": 10
+          "x": 0,
+          "y": 8
         },
+        "id": 3,
+        "targets": [
+          {
+            "expr": "crypto_deposits_latest_timestamp",
+            "legendFormat": "{{blockchain}} - {{network}}",
+            "refId": "A"
+          }
+        ],
         "options": {
-          "showHeader": true
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "textMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "dateTimeAsLocal"
+          },
+          "overrides": []
         }
       }
     ]
-  },
-  "overwrite": true
+  }
 }

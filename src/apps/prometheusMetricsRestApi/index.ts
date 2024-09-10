@@ -30,7 +30,6 @@ const latestBlockTimestamp = new Gauge({
   registers: [register],
 });
 
-
 // Middleware to parse JSON
 app.use(express.json());
 
@@ -61,7 +60,7 @@ app.get("/prometheus", async (req: Request, res: Response) => {
       console.log(`Deposit: ${JSON.stringify(deposit)}`);
       const blockNumber = Number(deposit.blockNumber);
       const blockTimestamp = Number(deposit.blockTimestamp);
-      console.log(deposit)
+      console.log(deposit);
       depositsTotal
         .labels(deposit.blockchain, deposit.network, deposit.token)
         .inc();
@@ -72,8 +71,6 @@ app.get("/prometheus", async (req: Request, res: Response) => {
         .labels(deposit.blockchain, deposit.network)
         .set(blockTimestamp);
     });
-    
-    
 
     // Return the metrics in Prometheus format
     res.set("Content-Type", register.contentType);
