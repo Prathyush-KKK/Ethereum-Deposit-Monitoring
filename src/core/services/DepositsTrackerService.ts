@@ -7,13 +7,12 @@ import {
 import { IDepositsRepository } from "core/types.repositories";
 import { DepositsTrackerService as IDepositsTrackerService } from "core/types.services";
 
-// DONE - Implemented storing the last block in the processBlockTransactions and processBlockTransactionsFrom
-
 export class DepositsTrackerService implements IDepositsTrackerService {
   private blockchainGateway: IBlockchainGateway;
   private notificatorGateway: INotifierGateway | undefined;
   private depositsRepository: IDepositsRepository;
   private filterIn: string[];
+  private lastProcessedBlock: number;
 
   constructor(options: {
     blockchainGateway: IBlockchainGateway;
@@ -25,6 +24,7 @@ export class DepositsTrackerService implements IDepositsTrackerService {
     this.notificatorGateway = options.notificatorGateway;
     this.depositsRepository = options.depositsRepository;
     this.filterIn = options.filterIn;
+    this.lastProcessedBlock = 0;
 
     if (this.filterIn.length) {
       console.info(
@@ -32,11 +32,9 @@ export class DepositsTrackerService implements IDepositsTrackerService {
       );
     }
 
-    // Send a notification
     this.notificatorGateway?.sendNotification(`Deposits tracker service started`);
   }
 
-  // Process the last block's transactions in batches
   public async processBlockTransactions(
     blockNumberOrHash: string | number = "latest"
   ): Promise<void> {
@@ -58,9 +56,8 @@ export class DepositsTrackerService implements IDepositsTrackerService {
           }
         }
 
-        // Update last processed block after batch processing
         if (typeof blockNumberOrHash === "number") {
-          await this.depositsRepository.updateLastProcessedBlock(blockNumberOrHash);
+          await this.updateLastProcessedBlock(blockNumberOrHash);
         }
       }
     } catch (error: any) {
@@ -72,8 +69,7 @@ export class DepositsTrackerService implements IDepositsTrackerService {
   }
 
   public async processBlockTransactionsFrom(blockNumber: number) {
-    const lastStoredBlockNumber =
-      (await this.depositsRepository.getLatestStoredBlock()) || blockNumber;
+    const lastStoredBlockNumber = await this.getLastProcessedBlock() || blockNumber;
     if (lastStoredBlockNumber) {
       console.info(
         `Executing block txs processing from block number ${lastStoredBlockNumber}`
@@ -85,9 +81,7 @@ export class DepositsTrackerService implements IDepositsTrackerService {
 
     for (let i = lastStoredBlockNumber; i <= latestBlock; i++) {
       await this.processBlockTransactions(i);
-
-      // After processing each block, store the last processed block number
-      await this.depositsRepository.updateLastProcessedBlock(i);
+      await this.updateLastProcessedBlock(i);
     }
 
     console.info(
@@ -95,14 +89,12 @@ export class DepositsTrackerService implements IDepositsTrackerService {
     );
   }
 
-  // Listen to pending transactions in real-time
   public startPendingTransactionsListener(): void {
     this.blockchainGateway.watchPendingTransactions((tx: TransactionData) => {
       this.processTransaction(tx);
     });
   }
 
-  // Listen to new minted blocks in real-time
   public startMintedBlocksListener(): void {
     this.blockchainGateway.watchMintedBlocks((blockNumber: number) => {
       this.processBlockTransactions(blockNumber);
@@ -128,13 +120,10 @@ export class DepositsTrackerService implements IDepositsTrackerService {
         token: this.blockchainGateway.token,
       };
 
-      // Validate the deposit schema
       DepositSchema.parse(deposit);
 
-      // Save the deposit to the storage repository
       await this.depositsRepository.storeDeposit(deposit);
 
-      // Send a notification
       await this.notificatorGateway?.sendNotification(
         `Deposit processed: ${txData.hash}\n\nAmount: ${txData.value}\nFee: ${fee}\nFrom: ${txData.from}\nTo: ${txData.to}\nBlock: ${txData.blockNumber}`
       );
@@ -144,5 +133,31 @@ export class DepositsTrackerService implements IDepositsTrackerService {
         `Error processing deposit: ${txData.hash}`
       );
     }
+  }
+
+  private async updateLastProcessedBlock(blockNumber: number): Promise<void> {
+    this.lastProcessedBlock = blockNumber;
+    if (typeof this.depositsRepository.updateLastProcessedBlock === 'function') {
+      try {
+        await this.depositsRepository.updateLastProcessedBlock(blockNumber);
+      } catch (error) {
+        console.warn('Failed to update last processed block in repository:', error);
+      }
+    }
+    console.info(`Updated last processed block to ${blockNumber}`);
+  }
+
+  private async getLastProcessedBlock(): Promise<number> {
+    if (typeof this.depositsRepository.getLatestStoredBlock === 'function') {
+      try {
+        const blockFromRepo = await this.depositsRepository.getLatestStoredBlock();
+        if (blockFromRepo && blockFromRepo > this.lastProcessedBlock) {
+          this.lastProcessedBlock = blockFromRepo;
+        }
+      } catch (error) {
+        console.warn('Failed to get last processed block from repository:', error);
+      }
+    }
+    return this.lastProcessedBlock;
   }
 }
