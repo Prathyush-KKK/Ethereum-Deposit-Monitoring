@@ -9,6 +9,9 @@ export class DepositsRepository implements IDepositsRepository {
   constructor(depositsModel: Model<Deposit>) {
     this.depositsModel = depositsModel;
   }
+  updateLastProcessedBlock(blockNumber: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
 
   public async storeDeposit(deposit: Deposit): Promise<void> {
     try {

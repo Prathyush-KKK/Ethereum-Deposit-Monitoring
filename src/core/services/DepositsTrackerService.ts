@@ -60,7 +60,7 @@ export class DepositsTrackerService implements IDepositsTrackerService {
           await this.updateLastProcessedBlock(blockNumberOrHash);
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error processing block ${blockNumberOrHash}:`, error);
       await this.notificatorGateway?.sendNotification(
         `Error processing block: ${blockNumberOrHash}`
@@ -137,26 +137,22 @@ export class DepositsTrackerService implements IDepositsTrackerService {
 
   private async updateLastProcessedBlock(blockNumber: number): Promise<void> {
     this.lastProcessedBlock = blockNumber;
-    if (typeof this.depositsRepository.updateLastProcessedBlock === 'function') {
-      try {
-        await this.depositsRepository.updateLastProcessedBlock(blockNumber);
-      } catch (error) {
-        console.warn('Failed to update last processed block in repository:', error);
-      }
+    try {
+      await this.depositsRepository.updateLastProcessedBlock(blockNumber);
+    } catch (error) {
+      console.warn('Failed to update last processed block in repository:', error);
     }
     console.info(`Updated last processed block to ${blockNumber}`);
   }
 
   private async getLastProcessedBlock(): Promise<number> {
-    if (typeof this.depositsRepository.getLatestStoredBlock === 'function') {
-      try {
-        const blockFromRepo = await this.depositsRepository.getLatestStoredBlock();
-        if (blockFromRepo && blockFromRepo > this.lastProcessedBlock) {
-          this.lastProcessedBlock = blockFromRepo;
-        }
-      } catch (error) {
-        console.warn('Failed to get last processed block from repository:', error);
+    try {
+      const blockFromRepo = await this.depositsRepository.getLatestStoredBlock();
+      if (blockFromRepo && blockFromRepo > this.lastProcessedBlock) {
+        this.lastProcessedBlock = blockFromRepo;
       }
+    } catch (error) {
+      console.warn('Failed to get last processed block from repository:', error);
     }
     return this.lastProcessedBlock;
   }

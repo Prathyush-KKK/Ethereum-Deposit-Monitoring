@@ -5,4 +5,6 @@ export interface IDepositsRepository {
   storeDeposit(deposit: Deposit): Promise<void>;
   getLatestStoredBlock(): Promise<number | null>;
   getDeposits(props: GetDepositsProps): Promise<Deposit[]>;
+  updateLastProcessedBlock(blockNumber: number): Promise<void>; 
+
 }
