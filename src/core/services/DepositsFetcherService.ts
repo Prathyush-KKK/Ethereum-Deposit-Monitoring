@@ -5,9 +5,10 @@ import {
   DepositsFetcherService as IDepositsFetcherService,
 } from "core/types.services";
 
-// TODO - would be nice to store which was the last block processed
+// DONE - Storing last block is done in the DepositsTrackerService
 
 // NOTE - error handling for fetches to data gateways is missing and it's relative to business logics needs
+// DONE - Error handling in data fetches handled in DepositsTrackerService
 
 export class DepositsFetcherService implements IDepositsFetcherService {
   private depositsRepository: IDepositsRepository;
@@ -17,6 +18,11 @@ export class DepositsFetcherService implements IDepositsFetcherService {
   }
 
   public async getDeposits(props: GetDepositsProps): Promise<Deposit[]> {
-    return await this.depositsRepository.getDeposits(props);
+    try {
+      return await this.depositsRepository.getDeposits(props);
+    } catch (error: any) {
+      console.error('Error fetching deposits:', error);
+      throw new Error('Failed to fetch deposits');
+    }
   }
 }
